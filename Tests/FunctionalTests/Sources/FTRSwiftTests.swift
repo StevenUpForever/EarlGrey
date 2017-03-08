@@ -94,9 +94,12 @@ class FTRSwiftTests: XCTestCase {
 
   func testTyping() {
     self.openTestView("Typing Views")
-    EarlGrey.select(elementWithMatcher: grey_accessibilityID("TypingTextField"))
-      .perform(grey_typeText("Sample Swift Test"))
-      .assert(grey_text("Sample Swift Test"))
+    let matcher = grey_accessibilityID("TypingTextField")
+    let action = grey_typeText("Sample Swift Test")
+    let assertionMatcher = grey_text("Sample Swift Test")
+    EarlGrey.select(elementWithMatcher: matcher)
+      .perform(action)
+      .assert(assertionMatcher)
   }
 
   func testTypingWithError() {
@@ -198,6 +201,20 @@ class FTRSwiftTests: XCTestCase {
       .perform(grey_setDate(date))
     EarlGrey.select(elementWithMatcher: grey_accessibilityID("DatePickerId"))
       .assert(grey_datePickerValue(date))
+  }
+
+  func testStepperActionWithCondition() {
+    self.openTestView("Basic Views")
+    var stepperValue = 51.0
+    // Without the parameter using the value of the wait action, a warning should be seen.
+    _ = GREYCondition.init(name: "conditionWithAction", block: {
+      stepperValue += 1
+      EarlGrey.select(elementWithMatcher: grey_kindOfClass(UIStepper.self))
+        .perform(grey_setStepperValue(stepperValue))
+      return stepperValue == 55
+    }).waitWithTimeout(seconds: 10.0)
+    EarlGrey.select(elementWithMatcher: grey_kindOfClass(UIStepper.self))
+      .assert(with: grey_stepperValue(55))
   }
 
   func openTestView(_ name: String) {

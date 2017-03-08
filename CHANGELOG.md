@@ -3,6 +3,102 @@
 Details changes in each release of EarlGrey. EarlGrey follows
 [semantic versioning](http://semver.org/).
 
+## [1.7.2](https://github.com/google/EarlGrey/tree/1.7.2) (02/17/2017)
+
+```
+Baseline: [6d55af5]
+   + [6d55af5]: 1.7.2 Release
+```
+
+### Bug Fixes
+* Fixed Swizzler to properly reset swizzled selectors.
+* Fixed typing by blacklisting UICompatibilityInputViewController in UIViewController tracking.
+
+### Compatibility
+* Requires iOS 8 as the minimum deployment target.
+* Supports Xcode 8.2.1 and iOS 10.2.1 on devices and simulators.
+* The EarlGrey gem runs out of the box for Swift 3.0 and Swift 2.3.
+
+### Enhancements
+* Updated analytics to use an client ID instead of user ID.
+
+### Contributors
+[mbaxley](https://github.com/mbaxley), thank you!
+
+## [1.7.1](https://github.com/google/EarlGrey/tree/1.7.1) (02/03/2017)
+
+```
+Baseline: [e026773]
++ [e026773]: Change version numbers for EarlGrey 1.7.1
+```
+
+### Bug Fixes
+* Fixed an issue with constraint failure details not being logged in the error trace.
+* Updated nullability for GREYMatchers to improve Swift support.
+* Minor changes to logging strings and docs.
+
+### Compatibility
+* Requires iOS 8 as the minimum deployment target.
+* Supports Xcode 8.2.1 and iOS 10.2.1 on devices and simulators.
+* The EarlGrey gem runs out of the box for Swift 3.0 and Swift 2.3.
+
+### Enhancements
+* Updated analytics to use an md5 hashed uid.
+
+## [1.7.0](https://github.com/google/EarlGrey/tree/1.7.0) (01/25/2017)
+
+```
+Baseline: [f823ff2]
++ [f823ff2]: Removing JSON escape in reported errors.
+```
+
+### Bug Fixes
+* Fixed a flake in testTrackingZombieQueue.
+* Fixed CGRectIntegralInside to handle negative rectangles.
+* Improved memory handling by moving autorelease pool inside loops.
+* Fixed the bundle id to be consistent across all the test projects.
+* Minor CI and other bug fixes.
+
+### Compatibility
+* Requires iOS 8 as the minimum deployment target.
+* Supports Xcode 8.2.1 and iOS 10.2.1 on devices and simulators.
+
+### New Features
+* Updated analytics to include *hash* of test class name and *hash* of test case names to better estimate the volume of EarlGrey usage.
+* Updated the readme to explain these changes.
+* Updated tests for analytics to test new features.
+
+### Enhancements
+* Improved EarlGrey error logging for better post processing [Issue #392](https://github.com/google/EarlGrey/issues/392).
+* Removed the deprecated methods and cleaned up private headers.
+* The EarlGrey gem runs out of the box for Swift 3.0 and Swift 2.3.
+
+### Deprecations
+* Removed deprecated methods `grey_pinchFastInDirection` and `grey_pinchSlowInDirection` in favor of `grey_pinchFastInDirectionAndAngle` and `grey_pinchSlowInDirectionAndAngle` respectively.
+
+### Contributors
+[bootstraponline](https://github.com/bootstraponline), [stkhapugin](https://github.com/stkhapugin) and [kebernet](https://github.com/kebernet)
+
+## [1.6.2](https://github.com/google/EarlGrey/tree/1.6.2) (01/06/2017)
+
+```
+Baseline: [0cdda9c]
++ [0cdda9c]: EarlGrey Sync for 1.6.2
+```
+
+### Bug Fixes
+* Updated the EarlGrey API for Swift 3.0 as per the latest guidelines.
+* Improved web tests to work with current google.com UI.
+* Fixed a bug in the visibility checker for 32bit platform.
+* Fixed flakiness caused by NSDate issues in EarlGreyExampleSwiftTests.
+
+### Enhancements
+* Added a travis hook to stop CI runs for docs-only changes.
+
+### Contributors
+Thanks to [bootstraponline](https://github.com/bootstraponline)
+and the rest of the contributors!
+
 ## [1.6.1](https://github.com/google/EarlGrey/tree/1.6.1) (12/20/2016)
 
 ```

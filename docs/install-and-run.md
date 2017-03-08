@@ -82,45 +82,44 @@ After you successfully run the `pod install` command, open the generated workspa
 
 ### Carthage Installation
 
-EarlGrey supports Carthage via [the EarlGrey gem.](https://rubygems.org/gems/earlgrey)
+EarlGrey supports Carthage via the [EarlGrey gem.](https://rubygems.org/gems/earlgrey)
 
 #### Step 1: Set up a test target for Carthage
 
-See [Step 1 from the `CocoaPods installation`](#step-1-set-up-a-test-target) detailed above.
+Follow [Step 1 from `CocoaPods installation`](#step-1-set-up-a-test-target) detailed above.
 
-#### Step 2: Configure carthage
+#### Step 2: Configure Carthage
 
-Install carthage
+  1. Install carthage.
 
-`brew update; brew install carthage`
+    `brew update; brew install carthage`
 
-Specify the version of EarlGrey to use in Cartfile.private.
-Note that you can also use "master" instead of a release tag.
+  2. Specify the version of EarlGrey to use in Cartfile.private.
+     Note that you can also use "master" instead of a release tag.
 
-`echo 'github "google/EarlGrey" "1.2.0"' >> Cartfile.private`
+    `echo 'github "google/EarlGrey" "1.2.0"' >> Cartfile.private`
 
-Update to latest EarlGrey revision and create Cartfile.resolved.
+  3. Update to latest EarlGrey revision and create Cartfile.resolved.
 
-`carthage update EarlGrey --platform ios`
+    `carthage update EarlGrey --platform ios`
 
-#### Step 3: Use the EarlGrey gem
+#### Step 3: Complete installation
 
-Install the EarlGrey gem.
+  1. Install the EarlGrey gem.
 
-`gem install earlgrey`
+    `gem install earlgrey`
 
-Use the gem to install EarlGrey into the testing target.
+  2. Use the gem to install EarlGrey into the testing target.
 
-`earlgrey install -t EarlGreyExampleSwiftTests`
+    `earlgrey install -t EarlGreyExampleSwiftTests`
 
 Now you're ready to start testing with EarlGrey!
 If you need more control, review the available install options.
-
 `earlgrey help install`
 
 ### GitHub Installation
 
-In cases where CocoaPods is not compatible with your project, you can add EarlGrey manually to your Xcode project.
+In cases where neither CocoaPods nor Carthage is compatible with your project, you can add EarlGrey manually to your Xcode project.
 
 #### Step 1: Generate EarlGrey.framework
 
@@ -178,7 +177,7 @@ In cases where CocoaPods is not compatible with your project, you can add EarlGr
 
 In Xcode, attempt to build the app under test. It should build without any errors. After EarlGrey is built, see the [Final Test Configuration](#final-test-configuration) section for additional customizations that you may need to get your tests to run.
 
-### Final Test Configuration <a name="final-test-configuration"></a>
+#### Final Test Configuration <a name="final-test-configuration"></a>
 
 The EarlGrey tests are hosted from the application being tested. Make sure the test target is setup
 correctly to launch the app under test:
@@ -289,7 +288,7 @@ steps in your setup:
 
       In this case you need to download the correct
       [`EarlGrey.swift`](https://github.com/google/EarlGrey/tree/master/gem/lib/earlgrey/files/) file
-      for your Swift version and add it to your test bundle. 
+      for your Swift version and add it to your test bundle.
 
 Here is an example of a very basic EarlGrey test written in Swift:
 
@@ -297,8 +296,8 @@ Here is an example of a very basic EarlGrey test written in Swift:
 import EarlGrey
 
  // Select the button with Accessibility ID "clickMe" and assert it's visible.
- EarlGrey().selectElementWithMatcher(grey_accessibilityID("ClickMe"))
-     .assertWithMatcher(grey_sufficientlyVisible())
+ EarlGrey.select(elementWithMatcher: grey_accessibilityID("ClickMe"))
+   .assert(grey_sufficientlyVisible())
 ```
 
 > For compatibility with Swift, we use `grey_allOfMatchers()` and `grey_anyOfMatchers()` instead of `grey_allOf()`

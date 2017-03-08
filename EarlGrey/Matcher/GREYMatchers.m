@@ -22,14 +22,16 @@
 
 #import "Additions/NSString+GREYAdditions.h"
 #import "Additions/UISwitch+GREYAdditions.h"
+#import "Additions/NSError+GREYAdditions.h"
 #import "Assertion/GREYAssertionDefines.h"
 #import "Common/GREYConfiguration.h"
 #import "Common/GREYConstants.h"
 #import "Common/GREYExposed.h"
-#import "Common/GREYPrivate.h"
+#import "Common/GREYError.h"
 #import "Common/GREYVisibilityChecker.h"
 #import "Core/GREYElementFinder.h"
 #import "Core/GREYElementInteraction.h"
+#import "Core/GREYElementInteraction+Internal.h"
 #import "Matcher/GREYAllOf.h"
 #import "Matcher/GREYAnyOf.h"
 #import "Matcher/GREYElementMatcherBlock.h"
@@ -88,7 +90,7 @@ static const double kElementSufficientlyVisiblePercentage = 0.75;
              isEqualToAccessibilityString:label];
   };
   DescribeToBlock describe = ^void(id<GREYDescription> description) {
-    [description appendText:[NSString stringWithFormat:@"accessibilityLabel(\"%@\")", label]];
+    [description appendText:[NSString stringWithFormat:@"accessibilityLabel('%@')", label]];
   };
   return grey_allOf(grey_accessibilityElement(),
                     [[GREYElementMatcherBlock alloc] initWithMatchesBlock:matches
@@ -104,7 +106,7 @@ static const double kElementSufficientlyVisiblePercentage = 0.75;
     return [element.accessibilityIdentifier isEqualToString:accessibilityID];
   };
   DescribeToBlock describe = ^void(id<GREYDescription> description) {
-    [description appendText:[NSString stringWithFormat:@"accessibilityID(\"%@\")",
+    [description appendText:[NSString stringWithFormat:@"accessibilityID('%@')",
                                                        accessibilityID]];
   };
   return grey_allOf(grey_respondsToSelector(@selector(accessibilityIdentifier)),
@@ -122,7 +124,7 @@ static const double kElementSufficientlyVisiblePercentage = 0.75;
              isEqualToAccessibilityString:value];
   };
   DescribeToBlock describe = ^void(id<GREYDescription> description) {
-    [description appendText:[NSString stringWithFormat:@"accessibilityValue(\"%@\")",
+    [description appendText:[NSString stringWithFormat:@"accessibilityValue('%@')",
                                                        value]];
   };
   return grey_allOf(grey_accessibilityElement(),
@@ -145,16 +147,16 @@ static const double kElementSufficientlyVisiblePercentage = 0.75;
                     nil);
 }
 
-+ (id<GREYMatcher>)matcherForAccessibilityHint:(NSString *)hint {
++ (id<GREYMatcher>)matcherForAccessibilityHint:(id)hint {
   MatchesBlock matches = ^BOOL(NSObject *element) {
-    if (element.accessibilityHint == hint) {
+    id accessibilityHint = element.accessibilityHint;
+    if (accessibilityHint == hint) {
       return YES;
     }
-    return [self grey_accessibilityString:element.accessibilityHint
-             isEqualToAccessibilityString:hint];
+    return [self grey_accessibilityString:accessibilityHint isEqualToAccessibilityString:hint];
   };
   DescribeToBlock describe = ^void(id<GREYDescription> description) {
-    [description appendText:[NSString stringWithFormat:@"accessibilityHint(\"%@\")", hint]];
+    [description appendText:[NSString stringWithFormat:@"accessibilityHint('%@')", hint]];
   };
   return grey_allOf(grey_accessibilityElement(),
                     [[GREYElementMatcherBlock alloc] initWithMatchesBlock:matches
@@ -176,10 +178,19 @@ static const double kElementSufficientlyVisiblePercentage = 0.75;
 }
 
 + (id<GREYMatcher>)matcherForText:(NSString *)text {
+  MatchesBlock matches = ^BOOL(id element) {
+    return [[element text] isEqualToString:text];
+  };
+  DescribeToBlock describe = ^void(id<GREYDescription> description) {
+    [description appendText:[NSString stringWithFormat:@"hasText('%@')", text]];
+  };
+  id<GREYMatcher> matcher = [[GREYElementMatcherBlock alloc] initWithMatchesBlock:matches
+                                                                 descriptionBlock:describe];
   return grey_allOf(grey_anyOf(grey_kindOfClass([UILabel class]),
                                grey_kindOfClass([UITextField class]),
                                grey_kindOfClass([UITextView class]), nil),
-                    hasProperty(@"text", text), nil);
+                    matcher,
+                    nil);
 }
 
 + (id<GREYMatcher>)matcherForFirstResponder {
@@ -271,7 +282,7 @@ static const double kElementSufficientlyVisiblePercentage = 0.75;
     return [element isKindOfClass:klass];
   };
   DescribeToBlock describe = ^void(id<GREYDescription> description) {
-    [description appendText:[NSString stringWithFormat:@"kindOfClass(\"%@\")",
+    [description appendText:[NSString stringWithFormat:@"kindOfClass('%@')",
                                                        NSStringFromClass(klass)]];
   };
   return [[GREYElementMatcherBlock alloc] initWithMatchesBlock:matches descriptionBlock:describe];
@@ -282,7 +293,7 @@ static const double kElementSufficientlyVisiblePercentage = 0.75;
     return [comparisonMatcher matches:@(element.progress)];
   };
   DescribeToBlock describe = ^void(id<GREYDescription> description) {
-    [description appendText:[NSString stringWithFormat:@"progressValueThatMatches(\"%@\")",
+    [description appendText:[NSString stringWithFormat:@"progressValueThatMatches('%@')",
                                                        comparisonMatcher]];
   };
   return grey_allOf(grey_kindOfClass([UIProgressView class]),
@@ -372,7 +383,7 @@ static const double kElementSufficientlyVisiblePercentage = 0.75;
     return [element.titleLabel.text isEqualToString:title];
   };
   DescribeToBlock describe = ^void(id<GREYDescription> description) {
-    [description appendText:[NSString stringWithFormat:@"buttonTitle(\"%@\")", title]];
+    [description appendText:[NSString stringWithFormat:@"buttonTitle('%@')", title]];
   };
   return grey_allOf(grey_kindOfClass([UIButton class]),
                     [[GREYElementMatcherBlock alloc] initWithMatchesBlock:matches
@@ -437,7 +448,7 @@ static const double kElementSufficientlyVisiblePercentage = 0.75;
     }
   };
   DescribeToBlock describe = ^void(id<GREYDescription> description) {
-    [description appendText:[NSString stringWithFormat:@"pickerColumnAtIndex(%ld) value(\"%@\")",
+    [description appendText:[NSString stringWithFormat:@"pickerColumnAtIndex(%ld) value('%@')",
                                                        (long)column, value]];
   };
   return grey_allOf(grey_kindOfClass([UIPickerView class]),
@@ -454,7 +465,7 @@ static const double kElementSufficientlyVisiblePercentage = 0.75;
     return [element.date isEqualToDate:value];
   };
   DescribeToBlock describe = ^void(id<GREYDescription> description) {
-    [description appendText:[NSString stringWithFormat:@"datePickerWithValue(\"%@\")", value]];
+    [description appendText:[NSString stringWithFormat:@"datePickerWithValue('%@')", value]];
   };
   return grey_allOf(grey_kindOfClass([UIDatePicker class]),
                     [[GREYElementMatcherBlock alloc] initWithMatchesBlock:matches
@@ -517,15 +528,21 @@ static const double kElementSufficientlyVisiblePercentage = 0.75;
     NSError *matcherError;
     NSArray *referenceElements = [interaction matchedElementsWithTimeout:0 error:&matcherError];
     if (matcherError) {
-      I_GREYAssertTrue(NO, @"Error finding element: %@", matcherError);
+      NSLog(@"Error finding element: %@", [GREYError grey_nestedDescriptionForError:matcherError]);
+      return NO;
     } else if (referenceElements.count > 1) {
-      I_GREYAssertTrue(NO, @"More than one element matches the reference matcher: %@",
-                       referenceElements);
+      NSLog(@"More than one element matches the reference matcher.\n"
+            @"The following elements were matched: %@\n"
+            @"Provided reference matcher: %@\n",
+            referenceElements,
+            referenceElementMatcher);
+      return NO;
     }
 
     id referenceElement = [referenceElements firstObject];
     if (!referenceElement) {
-      I_GREYAssertTrue(NO, @"Could not find reference element.");
+      NSLog(@"Could not find reference element.");
+      return NO;
     }
 
     for (GREYLayoutConstraint *constraint in constraints) {
@@ -610,7 +627,7 @@ static const double kElementSufficientlyVisiblePercentage = 0.75;
                     nil);
 }
 
-#pragma mark - Private Methods
+#pragma mark - Private
 
 /**
  * @return @c YES if the strings have the same string values, @c NO otherwise.

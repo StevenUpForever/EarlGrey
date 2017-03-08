@@ -23,7 +23,7 @@
 #import "Additions/XCTestCase+GREYAdditions.h"
 #import "Common/GREYAnalyticsDelegate.h"
 #import "Common/GREYConfiguration.h"
-#import "Common/GREYVerboseLogger.h"
+#import "Common/GREYLogger.h"
 
 /**
  *  The Analytics tracking ID that receives EarlGrey usage data.
@@ -45,8 +45,6 @@ static NSString *const kTrackingEndPoint = @"https://ssl.google-analytics.com";
   __weak id<GREYAnalyticsDelegate> _delegate;
   // Once set, analytics will be sent on next XCTestCase tearDown.
   BOOL _earlgreyWasCalledInXCTestContext;
-  // Test case counter used for counting testcases
-  unsigned int _testCaseCounter;
 }
 
 + (void)initialize {
@@ -70,7 +68,6 @@ static NSString *const kTrackingEndPoint = @"https://ssl.google-analytics.com";
   if (self) {
     _delegate = nil;
     _earlgreyWasCalledInXCTestContext = NO;
-    _testCaseCounter = 0;
     // Register as an observer for kGREYXCTestCaseInstanceDidTearDown.
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(grey_testCaseInstanceDidTearDown)
@@ -96,22 +93,11 @@ static NSString *const kTrackingEndPoint = @"https://ssl.google-analytics.com";
   return _delegate ? _delegate : self;
 }
 
-#pragma mark - GREYAnalyticsDelegate
-
-/**
- *  Creates an Analytics Event payload based on @c kPayloadFormat and URL encodes it.
- *  @see https://developers.google.com/analytics/devguides/collection/protocol/v1/devguide#event for
- *  more info on Analytics Events and its parameters.
- *
- *  @param category    The category value to be used for the created Analytics Event payload.
- *  @param subCategory The sub-category value to be used for the created Analytics Event payload.
- *  @param valueOrNil  The value to be used for the created Analytics Event payload. The value
- *                     can be @c nil to indicate that value is not to be added to the payload.
- */
-- (void)trackEventWithTrackingID:(NSString *)trackingID
-                        category:(NSString *)category
-                     subCategory:(NSString *)subCategory
-                           value:(NSNumber *)valueOrNil {
++ (void)sendEventHitWithTrackingID:(NSString *)trackingID
+                          clientID:(NSString *)clientID
+                          category:(NSString *)category
+                       subCategory:(NSString *)subCategory
+                             value:(NSNumber *)valueOrNil {
   if ([category length] == 0 || [subCategory length] == 0) {
     NSMutableArray *missingFields = [[NSMutableArray alloc] init];
     if ([category length] == 0) {
@@ -128,7 +114,7 @@ static NSString *const kTrackingEndPoint = @"https://ssl.google-analytics.com";
   // Initialize the payload with version(=1), tracking ID, client ID, category and sub category.
   NSMutableString *payload =
       [[NSMutableString alloc] initWithFormat:@"collect?v=1&tid=%@&cid=%@&t=event&ec=%@&ea=%@",
-                                              trackingID, @(arc4random()), category, subCategory];
+                                              trackingID, clientID, category, subCategory];
   // Append event value if present.
   if (valueOrNil) {
     [payload appendFormat:@"&ev=%@", valueOrNil];
@@ -155,6 +141,20 @@ static NSString *const kTrackingEndPoint = @"https://ssl.google-analytics.com";
   }] resume];
 }
 
+#pragma mark - GREYAnalyticsDelegate
+
+- (void)trackEventWithTrackingID:(NSString *)trackingID
+                        clientID:(NSString *)clientID
+                        category:(NSString *)category
+                     subCategory:(NSString *)subCategory
+                           value:(NSNumber *)valueOrNil {
+  [GREYAnalytics sendEventHitWithTrackingID:trackingID
+                                   clientID:clientID
+                                   category:category
+                                subCategory:subCategory
+                                      value:valueOrNil];
+}
+
 #pragma mark - Private
 
 /**
@@ -167,7 +167,6 @@ static NSString *const kTrackingEndPoint = @"https://ssl.google-analytics.com";
   if (_earlgreyWasCalledInXCTestContext) {
     // Reset var to track multiple test case invocations.
     _earlgreyWasCalledInXCTestContext = NO;
-    _testCaseCounter += 1;
 
     if (GREY_CONFIG_BOOL(kGREYConfigKeyAnalyticsEnabled)) {
       NSString *bundleIDMD5 = [[[NSBundle mainBundle] bundleIdentifier] grey_md5String];
@@ -175,8 +174,16 @@ static NSString *const kTrackingEndPoint = @"https://ssl.google-analytics.com";
         // If bundle ID is not available we use a placeholder.
         bundleIDMD5 = @"<Missing Bundle ID>";
       }
-      NSString *subCategory = [NSString stringWithFormat:@"TestCase_%u", _testCaseCounter];
+      XCTestCase *testCase = [XCTestCase grey_currentTestCase];
+      NSString *testCaseMD5 =
+          [[NSString stringWithFormat:@"%@::%@",
+                                      [testCase grey_testClassName],
+                                      [testCase grey_testMethodName]] grey_md5String];
+      NSString *subCategory = [NSString stringWithFormat:@"TestCase_%@", testCaseMD5];
+      NSString *clientID =
+          [[NSString stringWithFormat:@"%@_%@", bundleIDMD5, testCaseMD5] grey_md5String];
       [self.delegate trackEventWithTrackingID:kGREYAnalyticsTrackingID
+                                     clientID:clientID
                                      category:bundleIDMD5
                                   subCategory:subCategory
                                         value:@([[XCTestSuite defaultTestSuite] testCaseCount])];

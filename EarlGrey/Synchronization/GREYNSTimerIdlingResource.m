@@ -17,9 +17,8 @@
 #import "Synchronization/GREYNSTimerIdlingResource.h"
 
 #import "Common/GREYDefines.h"
-#import "Common/GREYPrivate.h"
 #import "Synchronization/GREYUIThreadExecutor.h"
-
+#import "Synchronization/GREYUIThreadExecutor+Internal.h"
 
 @implementation GREYNSTimerIdlingResource {
   NSString *_name;
@@ -58,7 +57,7 @@
 }
 
 - (NSString *)idlingResourceDescription {
-  return [NSString stringWithFormat:@"Waiting for timer %@ to fire(will fire after %g seconds)",
+  return [NSString stringWithFormat:@"Waiting for timer %@ to fire (next fire in %g seconds)",
              _trackedTimer, [_trackedTimer.fireDate timeIntervalSinceNow]];
 }
 

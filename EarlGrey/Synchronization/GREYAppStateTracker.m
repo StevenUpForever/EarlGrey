@@ -22,7 +22,7 @@
 #import "Additions/NSObject+GREYAdditions.h"
 #import "Common/GREYConfiguration.h"
 #import "Common/GREYDefines.h"
-#import "Common/GREYVerboseLogger.h"
+#import "Common/GREYLogger.h"
 
 /**
  *  Lock protecting element state map.
@@ -197,8 +197,8 @@ static pthread_mutex_t gStateLock = PTHREAD_RECURSIVE_MUTEX_INITIALIZER;
   }
   if (state & kGREYPendingCAAnimation) {
     [eventStateString addObject:@"Waiting for CAAnimations to finish. Continuous animations may "
-                                @"never finish and must be stop explicitly. Animations attached to "
-                                @"hidden view may still be executing in the background."];
+                                @"never finish and must be stopped explicitly. Animations attached "
+                                @"to hidden view may still be running in the background."];
   }
   if (state & kGREYPendingRootViewControllerToAppear) {
     [eventStateString addObject:@"Waiting for window's rootViewController to appear. "
@@ -360,15 +360,6 @@ static pthread_mutex_t gStateLock = PTHREAD_RECURSIVE_MUTEX_INITIALIZER;
   }];
 }
 
-- (void)grey_clearState {
-  [self grey_performBlockInCriticalSection:^id {
-    [_elementIDs removeAllObjects];
-    [_elementIDToState removeAllObjects];
-    [_elementIDToCallStack removeAllObjects];
-    return nil;
-  }];
-}
-
 #pragma mark - Methods Only For Testing
 
 - (GREYAppState)grey_lastKnownStateForElement:(id)element {
@@ -379,6 +370,17 @@ static pthread_mutex_t gStateLock = PTHREAD_RECURSIVE_MUTEX_INITIALIZER;
 
     return @(state);
   }] unsignedIntegerValue];
+}
+
+#pragma mark - Package Internal
+
+- (void)grey_clearState {
+  [self grey_performBlockInCriticalSection:^id {
+    [_elementIDs removeAllObjects];
+    [_elementIDToState removeAllObjects];
+    [_elementIDToCallStack removeAllObjects];
+    return nil;
+  }];
 }
 
 @end

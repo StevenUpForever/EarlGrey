@@ -26,7 +26,7 @@
 #import <EarlGrey/GREYFailureHandler.h>
 #import <EarlGrey/GREYFrameworkException.h>
 
-GREY_EXTERN NSString *const kGREYFailureHandlerKey;
+GREY_EXPORT id<GREYFailureHandler> getFailureHandler();
 
 #pragma mark - Public
 
@@ -200,6 +200,21 @@ GREY_EXTERN NSString *const kGREYFailureHandlerKey;
   I_GREYFailWithDetails((__description), (__details), ##__VA_ARGS__); \
 })
 
+/**
+ *  Generates a failure unconditionally for when the constraints for performing an action fail,
+ *  with the provided @c __description and @c __details.
+ *
+ *  @param __description  Description to print.
+ *  @param __details      The failure details. May be a format string, in which case the variable
+ *                        args will be required.
+ *  @param ...            Variable args for @c __description if it is a format string.
+ */
+#define GREYConstraintsFailedWithDetails(__description, __details, ...)  \
+({ \
+  I_GREYSetCurrentAsFailable(); \
+  I_GREYConstraintsFailedWithDetails((__description), (__details), ##__VA_ARGS__); \
+})
+
 #pragma mark - Private Use By Framework Only
 
 // THESE ARE METHODS TO BE CALLED BY THE FRAMEWORK ONLY.
@@ -221,8 +236,7 @@ GREY_EXTERN NSString *const kGREYFailureHandlerKey;
 ({ \
   NSString *details__; \
   I_GREYFormattedString(details__, __details, ##__VA_ARGS__); \
-  id<GREYFailureHandler> failureHandler__ = \
-      [[[NSThread currentThread] threadDictionary] valueForKey:kGREYFailureHandlerKey]; \
+  id<GREYFailureHandler> failureHandler__ = getFailureHandler(); \
   [failureHandler__ handleException:[GREYFrameworkException exceptionWithName:__exceptionName \
                                                                        reason:(__description)] \
                             details:(details__)]; \
@@ -231,8 +245,7 @@ GREY_EXTERN NSString *const kGREYFailureHandlerKey;
 // No private macro should call this.
 #define I_GREYSetCurrentAsFailable() \
 ({ \
-  id<GREYFailureHandler> failureHandler__ = \
-      [[[NSThread currentThread] threadDictionary] valueForKey:kGREYFailureHandlerKey]; \
+  id<GREYFailureHandler> failureHandler__ = getFailureHandler(); \
   if ([failureHandler__ respondsToSelector:@selector(setInvocationFile:andInvocationLine:)]) { \
     [failureHandler__ setInvocationFile:[NSString stringWithUTF8String:__FILE__] \
                       andInvocationLine:__LINE__]; \
@@ -336,6 +349,9 @@ GREY_EXTERN NSString *const kGREYFailureHandlerKey;
 
 #define I_GREYFailWithDetails(__description, __details, ...)  \
   I_GREYRegisterFailure(kGREYGenericFailureException, __description, __details, ##__VA_ARGS__)
+
+#define I_GREYConstraintsFailedWithDetails(__description, __details, ...)  \
+  I_GREYRegisterFailure(kGREYConstraintFailedException, __description, __details, ##__VA_ARGS__)
 
 #define I_GREYTimeout(__description, __details, ...) \
   I_GREYRegisterFailure(kGREYTimeoutException, __description, __details, ##__VA_ARGS__)

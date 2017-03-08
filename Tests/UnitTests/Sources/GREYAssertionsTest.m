@@ -16,6 +16,7 @@
 
 #import <EarlGrey/GREYAssertions.h>
 
+#import <EarlGrey/GREYAssertions+Internal.h>
 #import <EarlGrey/GREYAssertion.h>
 #import <EarlGrey/GREYElementFinder.h>
 #import <EarlGrey/GREYMatchers.h>
@@ -36,11 +37,10 @@ static NSMutableArray *gAppWindows;
   [[[self.mockSharedApplication stub] andReturn:gAppWindows] windows];
 }
 
-- (void)testViewHasTextWithNilParameter {
+- (void)testViewHasTextWithEmptyString {
   UIView *view = [[UIView alloc] init];
   NSError *error;
-
-  [[GREYAssertions grey_createAssertionWithMatcher:grey_text(nil)] assert:view error:&error];
+  [[GREYAssertions grey_createAssertionWithMatcher:grey_text(@"")] assert:view error:&error];
   XCTAssertEqualObjects(error.domain, kGREYInteractionErrorDomain);
   XCTAssertEqual(error.code, kGREYInteractionAssertionFailedErrorCode);
 }

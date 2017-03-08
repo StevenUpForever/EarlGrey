@@ -21,6 +21,9 @@
 #import "Additions/NSObject+GREYAdditions.h"
 #import "Assertion/GREYAssertionDefines.h"
 #import "Common/GREYDefines.h"
+#import "Common/GREYError.h"
+#import "Common/GREYErrorConstants.h"
+#import "Common/GREYObjectFormatter.h"
 #import "Core/GREYInteraction.h"
 #import "Matcher/GREYAllOf.h"
 #import "Matcher/GREYMatchers.h"
@@ -52,25 +55,38 @@
     return NO;
   }
 
-  if (_value > stepper.maximumValue) {
-    NSString *details = [NSString stringWithFormat:@"Stepper: %@\n"
-                                                   @"Value:%lf\n"
-                                                   @"Maximum value:%lf",
-                                                   stepper, _value, stepper.maximumValue];
-    NSString *reason = [NSString stringWithFormat:@"Cannot change stepper's value to %lf beyond"
-                                                  @"maximum value %lf",
-                                                  _value, stepper.maximumValue];
-    GREYFailWithDetails(reason, details);
-  } else if (_value < stepper.minimumValue) {
-    NSString *details = [NSString stringWithFormat:@"Stepper: %@\n"
-                                                   @"Value:%lf\n"
-                                                   @"Minimum value:%lf",
-                                                   stepper, _value, stepper.minimumValue];
-    NSString *reason = [NSString stringWithFormat:@"Cannot change stepper's value to %lf less than"
-                                                  @"minimum value %lf",
-                                                  _value,
-                                                  stepper.minimumValue];
-    GREYFailWithDetails(reason, details);
+  if (_value > stepper.maximumValue || _value < stepper.minimumValue) {
+    NSMutableDictionary *errorDetails = [[NSMutableDictionary alloc] init];
+
+    errorDetails[kErrorDetailActionNameKey] = self.name;
+    errorDetails[kErrorDetailStepperKey] = [stepper description];
+    errorDetails[kErrorDetailUserValueKey] = [NSString stringWithFormat:@"%lf", _value];
+    errorDetails[kErrorDetailStepMaxValueKey] =
+        [NSString stringWithFormat:@"%lf", stepper.maximumValue];
+    errorDetails[kErrorDetailStepMinValueKey] =
+        [NSString stringWithFormat:@"%lf", stepper.minimumValue];
+    errorDetails[kErrorDetailRecoverySuggestionKey] = @"Make sure the value for stepper lies "
+                                                      @"in appropriate range";
+
+    NSArray *keyOrder = @[ kErrorDetailActionNameKey,
+                           kErrorDetailStepperKey,
+                           kErrorDetailUserValueKey,
+                           kErrorDetailStepMaxValueKey,
+                           kErrorDetailStepMinValueKey,
+                           kErrorDetailRecoverySuggestionKey ];
+
+    NSString *reasonDetail = [GREYObjectFormatter formatDictionary:errorDetails
+                                                            indent:GREYObjectFormatIndent
+                                                         hideEmpty:YES
+                                                          keyOrder:keyOrder];
+    NSString *reason = [NSString stringWithFormat:@"Cannot set stepper value due to "
+                                                  @"invalid user input.\n"
+                                                  @"Exception with Action: %@\n",
+                                                  reasonDetail];
+
+    GREYFailWithDetails(reason, @"");
+
+    return NO;
   }
 
   UIButton *minusButton;
@@ -92,10 +108,15 @@
   }
 
   if (!(minusButton && plusButton)) {
-    [NSError grey_logOrSetOutReferenceIfNonNil:errorOrNil
-                                    withDomain:kGREYInteractionErrorDomain
-                                          code:kGREYInteractionActionFailedErrorCode
-                          andDescriptionFormat:@"Failed to find stepper buttons in %@", stepper];
+    NSString *description = [NSString stringWithFormat:@"Failed to find stepper buttons "
+                                                       @"in stepper [S]"];
+    NSDictionary *glossary = @{ @"S" : [stepper description] };
+
+    GREYPopulateErrorNotedOrLog(errorOrNil,
+                                kGREYInteractionErrorDomain,
+                                kGREYInteractionActionFailedErrorCode,
+                                description,
+                                glossary);
     return NO;
   }
 
@@ -117,14 +138,17 @@
     buttonToPress = minusButton;
   }
   if (currentValue != _value) {
-    [NSError grey_logOrSetOutReferenceIfNonNil:errorOrNil
-                                    withDomain:kGREYInteractionErrorDomain
-                                          code:kGREYInteractionActionFailedErrorCode
-                          andDescriptionFormat:@"Failed to exactly step to %lf from current value"
-                                               @" %lf and step %lf.",
-                                               _value,
-                                               stepper.value,
-                                               stepper.stepValue];
+    NSString *description = [NSString stringWithFormat:@"Failed to exactly step to %lf "
+                                                       @"from current value %lf and step %lf.",
+                                                       _value,
+                                                       stepper.value,
+                                                       stepper.stepValue];
+
+    GREYPopulateErrorOrLog(errorOrNil,
+                           kGREYInteractionErrorDomain,
+                           kGREYInteractionActionFailedErrorCode,
+                           description);
+
     return NO;
   }
   for (int i = 1; i <= numberPressNeeded; i++) {
