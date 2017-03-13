@@ -15,7 +15,6 @@
 //
 
 #import "FTRNetworkTestViewController.h"
-
 #import "FTRNetworkProxy.h"
 
 /**
@@ -73,13 +72,7 @@ static NSString *const kFTRProxyRegex = @"^http://www.youtube.com";
 - (IBAction)testNetworkClick:(id)sender {
   NSURLRequest *request =
       [NSURLRequest requestWithURL:[NSURL URLWithString:@"http://www.youtube.com/"]];
-  [[[NSURLSession sharedSession] dataTaskWithRequest:request
-                                   completionHandler:^(NSData *data,
-                                                       NSURLResponse *response,
-                                                       NSError *error) {
-                                     _requestCompletedLabel.hidden = NO;
-                                     [self verifyReceivedData:data];
-                                   }] resume];
+  [NSURLConnection connectionWithRequest:request delegate:self];
 }
 
 - (IBAction)userDidTapNSURLSessionTest:(id)sender {
@@ -92,6 +85,20 @@ static NSString *const kFTRProxyRegex = @"^http://www.youtube.com";
   }];
   // Begin the fetch.
   [task resume];
+}
+
+#pragma mark - NSURLConnectionDelegate
+
+- (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data {
+  [self verifyReceivedData:data];
+}
+
+- (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error {
+  _requestCompletedLabel.hidden = NO;
+}
+
+- (void)connectionDidFinishLoading:(NSURLConnection *)connection {
+  _requestCompletedLabel.hidden = NO;
 }
 
 @end
