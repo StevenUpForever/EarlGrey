@@ -14,10 +14,8 @@
 // limitations under the License.
 //
 
-#import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
 
-/**
- *  Class used for invoking a test case method and updating the status of the test case
- */
-@interface GREYTestCaseInvocation : NSInvocation
+@interface FTRMultiFingerSwipeGestureRecognizerViewController : UIViewController
+
 @end
