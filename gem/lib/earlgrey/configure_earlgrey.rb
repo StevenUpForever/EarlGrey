@@ -120,8 +120,7 @@ module EarlGrey
       scheme = modify_scheme_for_actions
 
       # Add a Copy Files Build Phase for EarlGrey.framework to embed it into the app under test.
-      # carthage uses carthage copy-frameworks instead of a copy files build phase.
-      add_earlgrey_copy_files_script unless carthage
+      add_earlgrey_copy_files_script
 
       # Add header/framework search paths for carthage
       add_carthage_search_paths
@@ -375,7 +374,7 @@ module EarlGrey
         target_files = test_target_group.files
         earlgrey_swift_file_ref = target_files.find { |f| f.display_name == src_swift_name }
         raise 'EarlGrey.swift not found in testing target' unless earlgrey_swift_file_ref
-        test_target.source_build_phase.add_file_reference earlgrey_swift_file_ref
+        test_target.source_build_phase.add_file_reference(earlgrey_swift_file_ref, true)
       end
 
       # Link Binary With Libraries - frameworks_build_phase - Add EarlGrey.framework
@@ -383,18 +382,8 @@ module EarlGrey
       existing_frameworks = test_target.frameworks_build_phase.files.map(&:display_name)
       unless existing_frameworks.include? earlgrey_framework
         framework_ref = add_earlgrey_product
-        test_target.frameworks_build_phase.add_file_reference framework_ref
-      end
-
-      if carthage
-        # Add shell script phase
-        shell_script_name = 'Carthage copy-frameworks Run Script'
-        unless test_target.shell_script_build_phases.map(&:name).include?(shell_script_name)
-          shell_script = test_target.new_shell_script_build_phase shell_script_name
-          shell_script.shell_path = '/bin/bash'
-          shell_script.shell_script = '/usr/local/bin/carthage copy-frameworks'
-          shell_script.input_paths = ['$(SRCROOT)/Carthage/Build/iOS/EarlGrey.framework']
-        end
+        # must pass 'true' to avoid duplicates
+        test_target.frameworks_build_phase.add_file_reference(framework_ref, true)
       end
 
       user_project.save
